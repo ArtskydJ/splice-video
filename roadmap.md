@@ -1,0 +1,6 @@
+- Complete keyboard navigation
+- Add button to modal to close VLC
+- Show "pro-tips" in the modal
+- Color code the xxx/yyy progress text, to show if completed, in progress, or watched
+- Don't show empty folders
+- Make a timer on the modal, and only mark a video as "watched" if it has been playing for 15 minutes or more

@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<meta http-equiv="Content-Security-Policy" content="default-src 'unsafe-inline'; media-src * blob:">
+		<title>Splice Video</title>
+		<style type="text/css">
+			body {
+				font-family: Arial;
+				font-size: 14pt;
+			}
+			button {
+				font-size: 14pt;
+			}
+			video {
+				max-width: 80vw;
+				max-height: 50vh;
+			}
+			.time-jump {
+				display: inline-block;
+				text-align: center;
+				width: 60px;
+			}
+			.time-jump-button {
+			}
+		</style>
+	</head>
+	<body>
+		<div>
+			<button id="browse-ffmpeg">Browse for ffmpeg.exe</button> <span id="selected-ffmpeg"></span>
+		</div>
+		
+		<div>
+			<button id="browse-video">Browse for video file</button> <span id="selected-video"></span>
+			<div id="list"></div>
+		</div>
+		
+		<div>
+			<input type="file" name="video" accept="video/mp4" id="input-video">
+			<button id="use-input-video">OK</button>
+		</div>
+		
+		<video src="" controls id="video">
+			Looks like you have not selected a video,
+			or that video type is not supported.
+		</video>
+		<div style="display: inline-block;">
+			<button class="time-jump-button rw" onclick="skip(-3600)"> ◄◄ </button>
+			<span class="time-jump">60 m</span>
+			<button class="time-jump-button ff" onclick="skip(+3600)"> ►► </button>
+			<br />
+			<button class="time-jump-button rw" onclick="skip(-600)">  ◄◄ </button>
+			<span class="time-jump">10 m</span>
+			<button class="time-jump-button ff" onclick="skip(+600)">  ►► </button>
+			<br />
+			<button class="time-jump-button rw" onclick="skip(-60)">   ◄◄ </button>
+			<span class="time-jump"> 1 m</span>
+			<button class="time-jump-button ff" onclick="skip(+60)">   ►► </button>
+			<br />
+			<button class="time-jump-button rw" onclick="skip(-10)">   ◄◄ </button>
+			<span class="time-jump">10 s</span>
+			<button class="time-jump-button ff" onclick="skip(+10)">   ►► </button>
+			<br />
+			<button class="time-jump-button rw" onclick="skip(-1)">    ◄◄ </button>
+			<span class="time-jump"> 1 s</span>
+			<button class="time-jump-button ff" onclick="skip(+1)">    ►► </button>
+			<br />
+			<button class="time-jump-button rw" onclick="skip(-1/30)"> ◄◄ </button>
+			<span class="time-jump"> 1 f</span>
+			<button class="time-jump-button ff" onclick="skip(+1/30)"> ►► </button>
+			<br />
+			<!--
+				✄
+				✂
+				⇹
+				⇥⇤
+				↤↦
+			-->
+			<button>⇥⇤</button>
+			<button>✂</button>
+			<button>↤↦</button>
+			<button onclick="updateCanvas(byId('canvas'))">update canvas</button>
+		</div>
+		<br /><a href="javascript:store.openInEditor()">store.openInEditor()</a>
+		<br /><textarea id="ffmpeg-output"></textarea>
+		<br /><canvas id="canvas"></canvas>
+
+
+		<script type="text/javascript">
+			const Store = require('electron-store')
+
+			const store = new Store({
+				defaults: {
+					ffmpegPath: '',
+					videoPath: '',
+				}
+			})
+			// store.openInEditor()
+			load()
+
+			const electron = require('electron')
+			const mainProcess = electron.remote.require('./main')
+			byId('browse-ffmpeg').addEventListener('click', () => {
+				mainProcess.selectExeFile().then(results => {
+					console.log(results.filePaths)
+					if (! results.canceled) {
+						if (results.filePaths[0].slice(-10) === 'ffmpeg.exe') {
+							store.set('ffmpegPath', results.filePaths[0])
+							load()
+						} else {
+							byId('selected-ffmpeg').innerHTML = 'Expected the selected exe to be named "ffmpeg.exe"'
+						}
+					} else {
+						byId('selected-ffmpeg').innerHTML = 'Select ffmpeg.exe'
+					}
+				})
+			})
+			byId('browse-video').addEventListener('click', () => {
+				var results = mainProcess.selectVideoFile().then(results => {
+					if (! results.canceled) {
+						store.set('videoPath', results.filePaths[0])
+						load()
+					} else {
+						console.log('canceled y')
+					}
+				})
+			})
+			byId('use-input-video').addEventListener('click', () => {
+				const videoFile = byId('input-video').files[0]
+				const videoUrl = window.URL.createObjectURL(videoFile)
+				store.set('videoUrl', videoUrl)
+				byId('video').src = videoUrl
+			})
+
+			//var protips = byId('protips').children
+			//protips[Math.floor(Math.random(protips.length))].className = 'show'
+
+
+			function load(){
+				var ffmpegPath = store.get('ffmpegPath')
+				var videoPath = store.get('videoPath')
+				byId('selected-ffmpeg').innerHTML = ffmpegPath || 'Select ffmpeg.exe'
+				byId('selected-video').innerHTML = videoPath || '⬿ Choose a video file...'
+				console.log('file...' + videoPath)
+				byId('video').src = videoPath ? ('file:///' + videoPath) : ''
+				if (!ffmpegPath) return false
+				if (!videoPath) return false
+
+				setTimeout(() => {
+					// Let the UI load, then run the blocking FS code
+					// const state = watchedState(store)
+					// do stuff with state
+				}, 1)
+			}
+			
+			function updateCanvas(canvasEle) {
+				var video = byId('video')
+				var context = canvasEle.getContext('2d')
+				var intv = setInterval(() => {
+					if (video.readyState >= video.HAVE_CURRENT_DATA) {
+						clearInterval(intv)
+						context.drawImage(video, 0, 0, canvasEle.clientWidth, canvasEle.clientHeight)
+					}
+				}, 10)
+			}
+
+			function byId(id) {
+				return document.getElementById(id)
+			}
+			
+			function skip(seconds) {
+				video.currentTime += seconds
+				updateCanvas(byId('canvas'))
+			}
+			
+			// video.play()
+			// video.pause()
+			// video.currentTime
+			// video.currentTime = 7000.05
+			// video.duration
+			// video.seekable.start(0)
+			// video.seekable.end(0)
+			// video.captureStream()
+					// maybe use this for start/end screenshots?
+					// https://developer.mozilla.org/en-US/docs/Web/API/WebRTC_API/Taking_still_photos#Get_the_video
+			// video.webkitDecodedFrameCount
+					// divide this by duration to get framerate does not work
+					// i suppose it doesn't actually decode the whole thing...
+					
+			// v.poster // not sure what this does
+			// v.on('loadeddata', ...)
+			// v.on('loadedmetadata', ...)
+			
+			// video.readyState
+				// video.HAVE_NOTHING = 0
+				// video.HAVE_METADATA = 1
+				// video.HAVE_CURRENT_DATA = 2
+				// video.HAVE_FUTURE_DATA = 3
+				// video.HAVE_ENOUGH_DATA = 4
+			// for me to take a screenshot, I need to wait for the video to be in a ready state
+			
+			// i could make my own controls
+			// https://developer.mozilla.org/en-US/docs/Web/Guide/Audio_and_video_delivery/cross_browser_video_player
+			
+			
+		</script>
+	</body>
+</html>
