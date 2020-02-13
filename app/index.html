@@ -8,13 +8,16 @@
 			body {
 				font-family: Arial;
 				font-size: 14pt;
+				margin: 0;
 			}
 			button {
 				font-size: 14pt;
 			}
 			video {
-				max-width: 80vw;
-				max-height: 50vh;
+				width: 100%;
+			}
+			canvas {
+				width: 10%;
 			}
 			.time-jump {
 				display: inline-block;
@@ -32,31 +35,13 @@
 		
 		<div>
 			<button id="browse-video">Browse for video file</button> <span id="selected-video"></span>
-			<div id="list"></div>
-		</div>
-		
-		<div>
-			<input type="file" name="video" accept="video/mp4" id="input-video">
-			<button id="use-input-video">OK</button>
 		</div>
 		
 		<video src="" controls id="video">
-			Looks like you have not selected a video,
-			or that video type is not supported.
+			Looks like you have not selected a video.
+			You you have selected a video type that is not supported.
 		</video>
 		<div style="display: inline-block;">
-			<button class="time-jump-button rw" onclick="skip(-3600)"> ◄◄ </button>
-			<span class="time-jump">60 m</span>
-			<button class="time-jump-button ff" onclick="skip(+3600)"> ►► </button>
-			<br />
-			<button class="time-jump-button rw" onclick="skip(-600)">  ◄◄ </button>
-			<span class="time-jump">10 m</span>
-			<button class="time-jump-button ff" onclick="skip(+600)">  ►► </button>
-			<br />
-			<button class="time-jump-button rw" onclick="skip(-60)">   ◄◄ </button>
-			<span class="time-jump"> 1 m</span>
-			<button class="time-jump-button ff" onclick="skip(+60)">   ►► </button>
-			<br />
 			<button class="time-jump-button rw" onclick="skip(-10)">   ◄◄ </button>
 			<span class="time-jump">10 s</span>
 			<button class="time-jump-button ff" onclick="skip(+10)">   ►► </button>
@@ -65,9 +50,9 @@
 			<span class="time-jump"> 1 s</span>
 			<button class="time-jump-button ff" onclick="skip(+1)">    ►► </button>
 			<br />
-			<button class="time-jump-button rw" onclick="skip(-1/30)"> ◄◄ </button>
+			<button class="time-jump-button rw" onclick="skip(-1/fps)"> ◄◄ </button>
 			<span class="time-jump"> 1 f</span>
-			<button class="time-jump-button ff" onclick="skip(+1/30)"> ►► </button>
+			<button class="time-jump-button ff" onclick="skip(+1/fps)"> ►► </button>
 			<br />
 			<!--
 				✄
@@ -87,7 +72,10 @@
 
 
 		<script type="text/javascript">
+			const cp = require('child_process')
 			const Store = require('electron-store')
+			
+			window.fps = 30
 
 			const store = new Store({
 				defaults: {
@@ -125,12 +113,6 @@
 					}
 				})
 			})
-			byId('use-input-video').addEventListener('click', () => {
-				const videoFile = byId('input-video').files[0]
-				const videoUrl = window.URL.createObjectURL(videoFile)
-				store.set('videoUrl', videoUrl)
-				byId('video').src = videoUrl
-			})
 
 			//var protips = byId('protips').children
 			//protips[Math.floor(Math.random(protips.length))].className = 'show'
@@ -145,6 +127,8 @@
 				byId('video').src = videoPath ? ('file:///' + videoPath) : ''
 				if (!ffmpegPath) return false
 				if (!videoPath) return false
+				
+				updateFrameRate(ffmpegPath, videoPath)
 
 				setTimeout(() => {
 					// Let the UI load, then run the blocking FS code
@@ -202,7 +186,17 @@
 			// i could make my own controls
 			// https://developer.mozilla.org/en-US/docs/Web/Guide/Audio_and_video_delivery/cross_browser_video_player
 			
-			
+			function updateFrameRate(ffmpegPath, videoPath) {
+				cp.exec(`"${ffmpegPath}" -i "${videoPath}"`, (err, stdout, stderr) => {
+					if (err && err.message.includes('At least one output file must be specified')) {
+						var results = /Stream #0.+Video.+, ([\d\.]+) fps,/.exec(err.message)
+						if (results) {
+							window.fps = parseFloat(results[1])
+							console.log('FPS updated to: ' + fps)
+						}
+					}
+				})
+			}
 		</script>
 	</body>
 </html>
