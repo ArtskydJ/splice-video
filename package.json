@@ -6,19 +6,32 @@
   "main": "main.js",
   "private": true,
   "scripts": {
+    "dev": "rollup -cw",
     "start": "electron .",
-    "build": "electron-packager ./ --overwrite --out=./dist --platform=darwin,linux,win32 --arch=ia32,x64 --icon=icon/icon"
+    "build": "electron-packager ./ --overwrite --out=./dist --platform=darwin,linux,win32 --arch=ia32,x64 --icon=icon/icon",
+    "build2": "rollup -c"
   },
   "repository": "https://github.com/ArtskydJ/splice-video",
   "author": "ArtskydJ",
   "license": "MIT",
   "devDependencies": {
+    "@rollup/plugin-commonjs": "^11.0.0",
+    "@rollup/plugin-node-resolve": "^7.0.0",
     "electron": "^8.0.0",
     "electron-packager": "^14.2.0",
-    "electron-reloader": "^0.3.0"
+    "rollup": "^1.20.0",
+    "rollup-plugin-livereload": "^1.0.0",
+    "rollup-plugin-svelte": "^5.0.3",
+    "rollup-plugin-terser": "^5.1.2",
+    "svelte": "^3.0.0"
   },
   "dependencies": {
     "electron-is-dev": "^1.1.0",
-    "electron-store": "^5.1.0"
+    "electron-store": "^5.1.0",
+    "rollup-plugin-commonjs": "^10.1.0",
+    "rollup-plugin-json": "^4.0.0",
+    "rollup-plugin-node-resolve": "^5.2.0",
+    "rollup-plugin-typescript": "^1.0.1",
+    "typescript": "^3.7.5"
   }
 }

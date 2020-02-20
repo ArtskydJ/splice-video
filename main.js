@@ -1,11 +1,11 @@
 // Modules to control application life and create native browser window
 const { app, BrowserWindow, dialog, Menu } = require('electron')
 const isDev = require('electron-is-dev')
-const videoExtensions = require('./app/video-extensions-list.js')
+const videoExtensions = require('./app-original/video-extensions-list.js')
 
-if (isDev) {
-	require('electron-reloader')(module)
-}
+// if (isDev) {
+// 	require('electron-reloader')(module)
+// }
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
@@ -28,7 +28,7 @@ function createWindow () {
 	Menu.setApplicationMenu(null)
 
 	// and load the index.html of the app.
-	mainWindow.loadFile('app/index.html')
+	mainWindow.loadFile('public/index.html')
 
 	// Open the DevTools.
 	if (isDev) {
@@ -73,7 +73,7 @@ app.on('activate', function () {
 // In this file you can include the rest of your app's specific main process
 // code. You can also put them in separate files and require them here.
 
-exports.selectExeFile = function() {
+function selectExeFile() {
 	return dialog.showOpenDialog(mainWindow, {
 		filters: [
 			{ name: 'Executable', extensions: [ 'exe' ] }
@@ -83,7 +83,7 @@ exports.selectExeFile = function() {
 		]
 	})
 }
-exports.selectVideoFile = function() {
+function selectVideoFile() {
 	return dialog.showOpenDialog(mainWindow, {
 		filters: [
 			{ name: 'Video', extensions: videoExtensions }
@@ -93,3 +93,6 @@ exports.selectVideoFile = function() {
 		]
 	})
 }
+
+module.exports.selectExeFile = selectExeFile
+module.exports.selectVideoFile = selectVideoFile
