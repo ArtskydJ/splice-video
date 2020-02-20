@@ -5,7 +5,7 @@ import json from 'rollup-plugin-json';
 
 export default [
 	{
-		input: ['main.js', 'app/renderer.js'],
+		input: ['app/renderer.js'],
 		output: {
 			dir: 'public/build',
 			format: 'cjs',
